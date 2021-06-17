@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 	// "strings"
 )
 
@@ -35,6 +36,7 @@ var regex3 = regexp.MustCompile(`(?m)<(/?[^>]+)>`)
 var regex4 = regexp.MustCompile(`(?m)(description"\s+content=")|(title" content=")`)
 var regex5 = regexp.MustCompile(`(?m)(\s\-\s)|([\[\]])`)
 var regex6 = regexp.MustCompile(`(?m)([\s—«»\(\)\?!/>"\{\}\.,:;']+)|(&#160;)`)
+var regex7 = regexp.MustCompile(`(?mi)(http://)|(https://)`)
 
 func main() {
 
@@ -48,13 +50,20 @@ func main() {
 			if err != nil {
 				fmt.Print(err)
 			}
-			defer res.Body.Close()
+
 			body, err := io.ReadAll(res.Body)
 			if err != nil {
 				fmt.Print(err)
 			}
+			res.Body.Close()
 
-			processAdress(string(body))
+			file := fmt.Sprintf("%s.html", fileName(address))
+			err = save(file, body)
+			if err != nil {
+				fmt.Print(err)
+			}
+
+			processAddress(string(body))
 
 		} else {
 			fmt.Println("Url must start with 'http://' or 'https://'")
@@ -71,7 +80,24 @@ func main() {
 // 	return string(body), nil
 // }
 
-func save(text string, dict map[string]int) error {
+func fileName(url string) string {
+	timestamp := time.Now().Unix()
+	name := regex7.ReplaceAllString(url, "")
+	name = strings.Replace(name, ".", "-", -1)
+	index := strings.Index(name, "/")
+	if index != -1 {
+		name = name[:index]
+	}
+	name = fmt.Sprintf("%s-%d", name, timestamp)
+	return name
+}
+
+func save(name string, data []byte) error {
+	err := ioutil.WriteFile(name, data, 0600)
+	return err
+}
+
+func save1(text string, dict map[string]int) error {
 	err := ioutil.WriteFile("text.txt", []byte(text), 0600)
 	b := new(bytes.Buffer)
 	for key, value := range dict {
@@ -81,7 +107,7 @@ func save(text string, dict map[string]int) error {
 	return err
 }
 
-func processAdress(text string) {
+func processAddress(text string) {
 	text = regex4.ReplaceAllString(text, "/>")
 	text = regex1.ReplaceAllString(text, substitution)
 	text = regex2.ReplaceAllString(text, substitution)
@@ -107,7 +133,7 @@ func processAdress(text string) {
 
 	fmt.Println(m)
 
-	err := save(text, m)
+	err := save1(text, m)
 	if err != nil {
 		fmt.Print(err)
 	}
