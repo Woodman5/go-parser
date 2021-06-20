@@ -1,2 +1,4 @@
-.html
-.txt
+*.html
+*.txt
+*.log
+
