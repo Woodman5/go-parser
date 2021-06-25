@@ -7,19 +7,9 @@ import (
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"io/ioutil"
-	"regexp"
 	"strings"
 	"time"
 )
-
-var regex1 = regexp.MustCompile(`(?mi)(<script[>\s]*|<style)([\s\w[:punct:]]*|.*)([<\s]*/script>|style>)`)
-var regex2 = regexp.MustCompile(`(?m)(<!-- )|( -->)`)
-var regex3 = regexp.MustCompile(`(?m)<(/?[^>]+)>`)
-var regex4 = regexp.MustCompile(`(?m)(description"\s+content=")|(title" content=")`)
-var regex5 = regexp.MustCompile(`(?m)(\s\-\s)|([\[\]])`)
-var regex6 = regexp.MustCompile(`(?m)([\s—«»\\()?!/>"{},:;']+)|(&#160;)|(\.\s)`)
-var regex7 = regexp.MustCompile(`(?mi)(http://)|(https://)`)
-var regex8 = regexp.MustCompile(`(?m)\n{2,}`)
 
 type htmlPage struct {
 	url, fileName string
@@ -35,7 +25,9 @@ func (p htmlPage) save() error {
 
 func (p *htmlPage) setName() {
 	p.date = time.Now().Unix()
-	name := regex7.ReplaceAllString(p.url, "")
+
+	name := strings.TrimPrefix(p.url, "http://")
+	name = strings.TrimPrefix(name, "https://")
 	name = strings.Replace(name, ".", "-", -1)
 	index := strings.Index(name, "/")
 	if index != -1 {
@@ -76,20 +68,7 @@ func (p htmlPage) saveToDB() error {
 }
 
 func (p *htmlPage) makeMap() {
-	text := string(p.data)
-	text = regex4.ReplaceAllString(text, "/>")
-	text = regex1.ReplaceAllString(text, "")
-	text = regex2.ReplaceAllString(text, "")
-	text = regex3.ReplaceAllString(text, " ")
-	text = regex5.ReplaceAllString(text, " ")
-	text = strings.Replace(text, "&#37;", "%", -1)
-	text = strings.Replace(text, "&#8209;", "-", -1)
-	text = strings.Replace(text, "&quot;", "\"", -1)
-	text = strings.Replace(text, "&nbsp;", " ", -1)
-	text = regex6.ReplaceAllString(text, "\n")
-	text = regex8.ReplaceAllString(text, "\n")
-	text = strings.TrimSpace(text)
-	text = strings.ToLower(text)
+	text := cleanHtmlFromPage(p.data)
 
 	wordList := strings.Split(text, "\n")
 
