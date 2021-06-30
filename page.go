@@ -18,8 +18,17 @@ type htmlPage struct {
 	date          int64
 }
 
+func newPage(url string, data []byte) *htmlPage {
+	p := new(htmlPage)
+	p.url = url
+	p.data = data
+	p.setName()
+	p.makeMap()
+	return p
+}
+
 func (p htmlPage) save() error {
-	err := ioutil.WriteFile(p.fileName+".html", p.data, 0600)
+	err := ioutil.WriteFile("pages/"+p.fileName+".html", p.data, 0600)
 	return err
 }
 
@@ -41,7 +50,7 @@ func (p htmlPage) saveMap() error {
 	for key, value := range p.dict {
 		fmt.Fprintf(b, "%s - %d\n", key, value)
 	}
-	err := ioutil.WriteFile(p.fileName+".txt", []byte(b.String()), 0600)
+	err := ioutil.WriteFile("pages/"+p.fileName+".txt", b.Bytes(), 0600)
 	return err
 }
 
