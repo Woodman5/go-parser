@@ -48,7 +48,9 @@ func (p *htmlPage) setName() {
 func (p htmlPage) saveMap() error {
 	b := new(bytes.Buffer)
 	for key, value := range p.dict {
-		fmt.Fprintf(b, "%s - %d\n", key, value)
+		msg := fmt.Sprintf("%s - %d\n", key, value)
+		fmt.Fprint(b, msg)
+		fmt.Print(msg)
 	}
 	err := ioutil.WriteFile("pages/"+p.fileName+".txt", b.Bytes(), 0600)
 	return err
